@@ -2,7 +2,7 @@ import { WebSocketServer, createWebSocketStream } from 'ws'
 import { mouse } from '@nut-tree/nut-js'
 
 import { httpServer } from './src/http_server'
-import { drawCircle, drawRectangle, drawSquare } from './src/utils'
+import { drawCircle, drawRectangle, drawSquare, printScreen } from './src/utils'
 
 httpServer.listen(8181, () => {
   console.log(`Client server listening on http://localhost:8181.`)
@@ -20,8 +20,6 @@ wss.on('connection', (client, req) => {
   duplex.on('data', async (data) => {
     const [name, arg1, arg2] = data.split(' ')
 
-    duplex.write(`${name} ${arg1} ${arg2}`)
-
     const { x, y } = await mouse.getPosition()
 
     if (name === 'mouse_up') {
@@ -38,7 +36,13 @@ wss.on('connection', (client, req) => {
       await drawSquare(Number(arg1))
     } else if (name === 'draw_rectangle') {
       await drawRectangle({ x: Number(arg1), y: Number(arg2) })
+    } else if (name === 'prnt_scrn') {
+      const base64 = await printScreen({ x, y })
+      duplex.write(`${name} ${base64}`)
+      return
     }
+
+    duplex.write(`${name} ${arg1} ${arg2}`)
   })
 
   client.on('close', () => {
