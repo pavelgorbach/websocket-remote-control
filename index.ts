@@ -2,6 +2,7 @@ import { WebSocketServer, createWebSocketStream } from 'ws'
 import { mouse } from '@nut-tree/nut-js'
 
 import { httpServer } from './src/http_server'
+import { drawCircle, drawRectangle, drawSquare } from './src/utils'
 
 httpServer.listen(8181, () => {
   console.log(`Client server listening on http://localhost:8181.`)
@@ -31,6 +32,12 @@ wss.on('connection', (client, req) => {
       await mouse.setPosition({ x, y: y - -arg1 })
     } else if (name === 'mouse_left') {
       await mouse.setPosition({ x: x - arg1, y })
+    } else if (name === 'draw_circle') {
+      await drawCircle({ x: Number(x), y: Number(y), radius: Number(arg1) })
+    } else if (name === 'draw_square') {
+      await drawSquare(Number(arg1))
+    } else if (name === 'draw_rectangle') {
+      await drawRectangle({ x: Number(arg1), y: Number(arg2) })
     }
   })
 
