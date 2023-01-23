@@ -1,34 +1,40 @@
-import WebSocket, { WebSocketServer } from 'ws'
+import { WebSocketServer, createWebSocketStream } from 'ws'
 // import { mouse } from '@nut-tree/nut-js'
 
 import { httpServer } from './src/http_server'
 
-const PORT = 8181
-
-httpServer.listen(PORT, () => {
-  console.log(`Client server listening on port:8181.`)
+httpServer.listen(8181, () => {
+  console.log(`Client server listening on http://localhost:8181.`)
 })
 
-const ws = new WebSocket(`ws:/localhost:${PORT}`)
-
-ws.on('open', function open() {
-  ws.send('message from client')
+const wss = new WebSocketServer({ port: 8080 }, () => {
+  console.log(`Websocket server listening on http://localhost:8080.`)
 })
 
-ws.on('message', function message(data) {
-  console.log('received from server to client: %s', data)
-})
+wss.on('connection', (client, req) => {
+  console.log(`Websocket connection opened on port:${req.socket.localPort}.`)
 
-const wss = new WebSocketServer({ server: httpServer })
+  const duplex = createWebSocketStream(client, { encoding: 'utf8' })
 
-wss.on('connection', (client) => {
-  client.on('message', (data) => {
-    console.log('received from client to server: %s', data)
+  duplex.on('data', (data) => {
+    console.log('received data', data)
   })
 
-  client.send('message from server')
+  client.on('close', () => {
+    console.log('Websocket connection closed')
+  })
 })
 
 wss.on('close', () => {
-  console.log('close connetion')
+  console.log('Websocket server closed')
+})
+
+process.on('SIGINT', () => {
+  wss.close()
+
+  wss.clients.forEach((client) => {
+    client.close()
+  })
+
+  process.exit()
 })
